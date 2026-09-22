@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Activity, ArchiveRestore, CheckSquare, Plus, Trash2 } from 'lucide-react';
+import { X, Activity, ArchiveRestore, CheckSquare, Plus, Trash2, Share, PlusSquare } from 'lucide-react';
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -96,20 +96,55 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
             </p>
           </div>
         </div>
-         {/* 6. Uygulama Olarak Kullanmak */}
-          <div className="p-3 rounded-lg bg-[#161822] border border-hud-border/70 flex flex-col gap-1.5">
-            <div className="flex items-center gap-2 text-hud-red font-semibold">
-              <Activity className="w-3.5 h-3.5" />
-              <span>Ipad Ana Ekrana Eklemek</span>
-            </div>
-            <p className="text-hud-muted leading-relaxed">
-              Uygulamayı uzun vadeli kullanmak için gerekli bir adım.
-              <br />• Sağ üstten paylaşa tıkla. Daha fazla veya view more yazısına tıkla.
-              <br />• Add to home screen tuşuna bas(Ana ekrana ekle).
-              <br />• İstediğin adı ver, Open as WebApp seçeneğinin açık olmasına dikkat et.
-            </p>
-          </div>
+         {/* 6. Uygulama Olarak Kullanmak (iPad PWA) */}
+<div className="p-3.5 rounded-lg bg-[#161822] border border-hud-primary/30 flex flex-col gap-2.5">
+  <div className="flex items-center justify-between">
+    <div className="flex items-center gap-2 text-hud-primary font-semibold">
+      <Share className="w-3.5 h-3.5" />
+      <span>iPad'e Yükleme (Ana Ekrana Ekle)</span>
+    </div>
+    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-hud-primary/10 text-hud-primary border border-hud-primary/20">
+      ÖNERİLEN
+    </span>
+  </div>
 
+  <p className="text-hud-muted text-[11px] leading-relaxed">
+    Verilerin silinmemesi ve uygulamanın tam ekran bir iPad uygulaması gibi çalışması için Safari üzerinden ana ekrana sabitleyebilirsin:
+  </p>
+
+  {/* Adım Adım Görsel Akış */}
+  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-1">
+    <div className="flex items-center gap-2 p-2 rounded bg-[#10121A] border border-hud-border/60">
+      <div className="w-6 h-6 rounded bg-[#1C2237] flex items-center justify-center text-hud-primary flex-shrink-0">
+        <Share className="w-3.5 h-3.5" />
+      </div>
+      <div className="flex flex-col">
+        <span className="text-hud-text font-medium text-[11px]">1. Paylaş</span>
+        <span className="text-[10px] text-hud-muted">Safari üst bardan tıkla</span>
+      </div>
+    </div>
+
+    <div className="flex items-center gap-2 p-2 rounded bg-[#10121A] border border-hud-border/60">
+      <div className="w-6 h-6 rounded bg-[#1C2237] flex items-center justify-center text-hud-primary flex-shrink-0">
+        <PlusSquare className="w-3.5 h-3.5" />
+      </div>
+      <div className="flex flex-col">
+        <span className="text-hud-text font-medium text-[11px]">2. Ana Ekrana Ekle</span>
+        <span className="text-[10px] text-hud-muted">Menüden seçeneği bul</span>
+      </div>
+    </div>
+
+    <div className="flex items-center gap-2 p-2 rounded bg-[#10121A] border border-hud-border/60">
+      <div className="w-6 h-6 rounded bg-[#1C2237] flex items-center justify-center text-hud-green flex-shrink-0 font-mono text-xs font-bold">
+        ✓
+      </div>
+      <div className="flex flex-col">
+        <span className="text-hud-text font-medium text-[11px]">3. Onayla</span>
+        <span className="text-[10px] text-hud-muted">Tam ekran başlat</span>
+      </div>
+    </div>
+  </div>
+</div>
         {/* Kapat Butonu */}
         <div className="flex justify-end pt-2 border-t border-hud-border">
           <button
