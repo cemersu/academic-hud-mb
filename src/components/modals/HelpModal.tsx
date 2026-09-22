@@ -10,26 +10,28 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#12141C] border border-hud-borderLight w-full max-w-lg rounded-xl p-5 shadow-2xl flex flex-col gap-4 text-xs">
-        {/* Başlık */}
-        <div className="flex items-center justify-between border-b border-hud-border pb-3">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+      {/* Modal Kutusu: Maksimum yükseklik %85 ile sınırlandı */}
+      <div className="bg-[#12141C] border border-hud-borderLight w-full max-w-lg max-h-[85vh] rounded-xl shadow-2xl flex flex-col text-xs overflow-hidden">
+        
+        {/* Sabit Başlık */}
+        <div className="flex items-center justify-between p-4 border-b border-hud-border bg-[#12141C] flex-shrink-0">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-hud-primary" />
+            <span className="w-2 h-2 rounded-full bg-hud-primary animate-pulse" />
             <span className="font-mono text-sm tracking-wider font-semibold text-hud-text">
               KULLANIM KILAVUZU
             </span>
           </div>
           <button
             onClick={onClose}
-            className="text-hud-muted hover:text-hud-text transition-colors p-1"
+            className="text-hud-muted hover:text-hud-text transition-colors p-1 rounded-md hover:bg-hud-border/40"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Maddeler Listesi */}
-        <div className="flex flex-col gap-3.5 overflow-y-auto max-h-[70vh] pr-1">
+        {/* Kaydırılabilir İçerik Alanı */}
+        <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-3 min-h-0 overscroll-contain">
           {/* 1. Ders Ekleme */}
           <div className="p-3 rounded-lg bg-[#161822] border border-hud-border/70 flex flex-col gap-1.5">
             <div className="flex items-center gap-2 text-hud-primary font-semibold">
@@ -37,10 +39,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               <span>Ders Ekleme</span>
             </div>
             <p className="text-hud-muted leading-relaxed">
-              İki şekilde ders ekleyebilirsin:
-              <br />• Sağ üstteki <strong className="text-hud-text">"Ders Ekle"</strong> butonuna tıklayarak.
-              <br />• Takvim ızgarasında dersin olduğu <strong className="text-hud-text">boş saat dilimine doğrudan tıklayarak</strong> (o gün ve saat otomatik seçilir).
-              <br />Açılan pencerede var olan bir dersi seçebilir veya <em>"+ Yeni Ders Tanımla"</em> ile yeni ders kodu ve devamsızlık limiti belirleyebilirsin.
+              • Sağ üstteki <strong className="text-hud-text">"Ders Ekle"</strong> butonuna basabilir veya
+              <br />• Takvimde dersin olacağı <strong className="text-hud-text">boş saat dilimine doğrudan tıklayarak</strong> ekleyebilirsin.
             </p>
           </div>
 
@@ -51,10 +51,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               <span>Devamsızlık Nasıl İşlenir?</span>
             </div>
             <p className="text-hud-muted leading-relaxed">
-              Dersler varsayılan olarak <strong className="text-hud-green">"Girildi" (Koyu Mavi / Yeşil nokta)</strong> kabul edilir.
-              <br />• Gitmediğin / kaçırdığın bir dersin <strong className="text-hud-text">üzerine bir kez tıkla</strong>; kutu <strong className="text-hud-red">Kırmızıya</strong> döner.
-              <br />• Kırmızı yaptığın an, sol paneldeki ilgili dersin devamsızlık barı kaçırılan saat kadar otomatik olarak dolar.
-              <br />• Yanlışlıkla tıkladıysan tekrar tıkla; eski haline döner ve saat geri düşer.
+              • Kaçırdığın dersin <strong className="text-hud-text">üzerine bir kez tıkla</strong>; kutu kırmızıya döner ve sol paneldeki sayaç otomatik artar.
+              <br />• Yanlışlıkla yaptıysan tekrar tıkla; eski haline döner.
             </p>
           </div>
 
@@ -65,9 +63,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               <span>"Haftayı Arşivle" Ne İşe Yarar?</span>
             </div>
             <p className="text-hud-muted leading-relaxed">
-              Hafta bittiğinde bu butona bas:
-              <br />• O hafta kırmızı (kaçırıldı) işaretlediğin dersler <strong className="text-hud-text">kalıcı hafızaya kilitlenir</strong>; sol paneldeki devamsızlık toplamın korunur.
-              <br />• Takvimdeki tüm kırmızı dersler yeni hafta için tekrar varsayılana döner ve takvim sıfırlanır.
+              • Hafta bittiğinde bu butona basarak kaçırdığın dersleri kalıcı hafızaya kilitlersin.
+              <br />• Sol paneldeki devamsızlık toplamı korunur, takvim ise yeni hafta için sıfırlanır.
             </p>
           </div>
 
@@ -78,57 +75,45 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               <span>Ders Silme</span>
             </div>
             <p className="text-hud-muted leading-relaxed">
-              • <strong className="text-hud-text">Tek bir saati silmek için:</strong> Takvimdeki ders kutucuğunun üzerine gel/dokun, sağ üstte çıkan <Trash2 className="w-3 h-3 inline text-hud-red" /> çöp kutusuna bas.
-              <br />• <strong className="text-hud-text">Dersi komple kaldırmak için:</strong> Sol devamsızlık panelindeki ders isminin yanındaki çöp kutusuna bas; o ders ve programdaki tüm saatleri silinir.
+              • <strong className="text-hud-text">Tek oturum:</strong> Ders kutusuna dokun/üzerine gel, sağ üstteki kırmızı çöp kutusuna bas.
+              <br />• <strong className="text-hud-text">Tüm ders:</strong> Sol devamsızlık listesinde ders adının yanındaki çöp kutusuna bas.
             </p>
           </div>
 
-          {/* 5. Yapılacaklar (Assignment/To-Do) */}
+          {/* 5. Yapılacaklar */}
           <div className="p-3 rounded-lg bg-[#161822] border border-hud-border/70 flex flex-col gap-1.5">
             <div className="flex items-center gap-2 text-hud-green font-semibold">
               <CheckSquare className="w-3.5 h-3.5" />
               <span>Yapılacaklar & Ödev Takibi</span>
             </div>
             <p className="text-hud-muted leading-relaxed">
-              • Sol alttaki <strong className="text-hud-text">+</strong> butonuna basıp ödev/görev adı ve son teslim tarihini (Due Date) gir.
-              <br />• Son teslim tarihi <strong className="text-hud-yellow">3 günden az kalanlar sarı</strong>, <strong className="text-hud-red">tarihi geçenler kırmızı</strong> görünür.
-              <br />• Tamamladığında göreve tıkla; üzeri çizilir ve tamamlandı sayılır.
+              • Sol alttan ödev ve teslim tarihi ekle. Süresi yaklaşanlar sarı, geçenler kırmızı görünür. Tamamladığında üzerine tıkla.
             </p>
           </div>
-        </div>
-         {/* 6. iPad Ana Ekrana Ekleme */}
+
+          {/* 6. iPad Ana Ekrana Ekleme */}
           <div className="p-3 rounded-lg bg-[#161822] border border-hud-border/70 flex flex-col gap-2">
             <div className="flex items-center gap-2 text-hud-primary font-semibold">
               <Share className="w-3.5 h-3.5" />
               <span>iPad Ana Ekrana Ekleme (Tam Ekran Modu)</span>
             </div>
-            <p className="text-hud-muted leading-relaxed">
-              Uygulamayı tarayıcı çubukları olmadan tam ekran çalıştırmak ve verilerin silinmesini önlemek için şu adımları izle:
+            <p className="text-hud-muted leading-relaxed text-[11px]">
+              Tarayıcı çubukları olmadan tam ekran çalıştırmak için:
             </p>
-            <ol className="flex flex-col gap-1.5 pl-1 font-mono text-[11px] text-hud-muted">
-              <li className="flex items-start gap-2">
-                <span className="text-hud-primary font-bold">1.</span>
-                <span>Safari'nin sağ üstündeki <strong className="text-hud-text font-sans">Paylaş</strong> butonuna tıkla.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-hud-primary font-bold">2.</span>
-                <span>Açılan menüde aşağı kaydırıp <strong className="text-hud-text font-sans">Daha Fazla (View More)</strong> seçeneğine tıkla.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-hud-primary font-bold">3.</span>
-                <span>Listeden <strong className="text-hud-text font-sans">Ana Ekrana Ekle (Add to Home Screen)</strong> seçeneğini seç.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-hud-primary font-bold">4.</span>
-                <span>İstediğin adı ver ve <strong className="text-hud-text font-sans">Open as WebApp</strong> anahtarının açık olduğundan emin olup <strong className="text-hud-text font-sans">Ekle</strong>'ye bas.</span>
-              </li>
-            </ol>
+            <div className="flex flex-col gap-1.5 text-hud-muted font-mono text-[11px]">
+              <div><span className="text-hud-primary font-bold mr-1.5">1.</span>Safari'nin sağ üstündeki <strong className="text-hud-text font-sans">Paylaş</strong> butonuna tıkla.</div>
+              <div><span className="text-hud-primary font-bold mr-1.5">2.</span>Menüde aşağı inip <strong className="text-hud-text font-sans">Daha Fazla (View More)</strong> seçeneğine tıkla.</div>
+              <div><span className="text-hud-primary font-bold mr-1.5">3.</span>Listeden <strong className="text-hud-text font-sans">Ana Ekrana Ekle (Add to Home Screen)</strong> seçeneğini seç.</div>
+              <div><span className="text-hud-primary font-bold mr-1.5">4.</span><strong className="text-hud-text font-sans">Open as WebApp</strong> açık kalsın ve <strong className="text-hud-text font-sans">Ekle</strong>'ye bas.</div>
+            </div>
           </div>
-        {/* Kapat Butonu */}
-        <div className="flex justify-end pt-2 border-t border-hud-border">
+        </div>
+
+        {/* Sabit Alt Bar: Her zaman ekranın içinde görünür */}
+        <div className="p-3 border-t border-hud-border bg-[#12141C] flex justify-end flex-shrink-0">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 bg-hud-border hover:bg-hud-borderLight text-hud-text rounded-lg transition-colors font-medium"
+            className="w-full sm:w-auto px-5 py-2 bg-hud-primary hover:bg-blue-600 text-white rounded-lg transition-colors font-medium text-xs shadow-md shadow-blue-500/20"
           >
             Anladım
           </button>
