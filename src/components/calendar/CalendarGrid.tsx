@@ -1,5 +1,6 @@
 import React from 'react';
-import type { Course, CourseSession } from '../../types';
+import type { Course } from '../../types';
+import type { CourseSession } from '../../types';
 import { CourseBlock } from './CourseBlock';
 import { START_HOUR, END_HOUR, HOUR_HEIGHT } from '../../utils/timeUtils';
 
@@ -8,6 +9,7 @@ interface CalendarGridProps {
   sessions: CourseSession[];
   missedSessionIds: Set<string>;
   onToggleSession: (sessionId: string) => void;
+  onDeleteSession: (sessionId: string) => void;
   onSlotClick?: (day: number, hour: number) => void;
 }
 
@@ -24,9 +26,9 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   sessions,
   missedSessionIds,
   onToggleSession,
+  onDeleteSession,
   onSlotClick,
 }) => {
-  // 08:00'dan 18:00'a kadar saat listesi
   const hours = Array.from(
     { length: END_HOUR - START_HOUR },
     (_, i) => START_HOUR + i
@@ -36,7 +38,6 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-hud-card border border-hud-border rounded-xl overflow-hidden shadow-2xl">
-      {/* Gün Başlıkları */}
       <div className="grid grid-cols-[60px_repeat(5,1fr)] border-b border-hud-border bg-hud-card/80 backdrop-blur sticky top-0 z-10">
         <div className="p-3 text-[11px] font-mono text-hud-muted text-center border-r border-hud-border flex items-center justify-center">
           SAAT
@@ -51,9 +52,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
         ))}
       </div>
 
-      {/* Zaman Çizgileri ve Gün Sütunları */}
       <div className="grid grid-cols-[60px_repeat(5,1fr)] flex-1 overflow-y-auto relative">
-        {/* Sol Saat Çizelgesi */}
         <div className="border-r border-hud-border bg-[#0E1017]">
           {hours.map((hour) => (
             <div
@@ -66,7 +65,6 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           ))}
         </div>
 
-        {/* 5 Gün Sütunu */}
         {DAYS.map((day) => {
           const daySessions = sessions.filter((s) => s.dayOfWeek === day.id);
 
@@ -76,7 +74,6 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
               className="relative border-r border-hud-border/50 last:border-r-0 bg-hud-card/30"
               style={{ height: `${hours.length * HOUR_HEIGHT}px` }}
             >
-              {/* Arka plandaki saat başı yatay kılavuz çizgileri */}
               {hours.map((hour) => (
                 <div
                   key={hour}
@@ -86,7 +83,6 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                 />
               ))}
 
-              {/* Günün ders blokları */}
               {daySessions.map((session) => (
                 <CourseBlock
                   key={session.id}
@@ -94,6 +90,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                   course={getCourseById(session.courseId)}
                   isMissed={missedSessionIds.has(session.id)}
                   onToggleStatus={onToggleSession}
+                  onDeleteSession={onDeleteSession}
                 />
               ))}
             </div>

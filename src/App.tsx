@@ -12,17 +12,14 @@ import { getCurrentWeekKey } from './utils/timeUtils';
 import { Calendar, Plus, ArchiveRestore } from 'lucide-react';
 
 export function App() {
-  // Temiz veri anahtarları (_v1) sayesinde yeni kullanıcılar ve iPad boş ekranla başlar
   const [courses, setCourses] = useLocalStorage<Course[]>('academic_courses_v1', INITIAL_COURSES);
   const [sessions, setSessions] = useLocalStorage<CourseSession[]>('academic_sessions_v1', INITIAL_SESSIONS);
   const [tasks, setTasks] = useLocalStorage<Task[]>('academic_tasks_v1', INITIAL_TASKS);
 
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalInitialDay, setModalInitialDay] = useState(1);
   const [modalInitialTime, setModalInitialTime] = useState('08:40');
 
-  // Devamsızlık Arşivi
   const currentWeekKey = getCurrentWeekKey();
   const [missedSessionsMap, setMissedSessionsMap] = useLocalStorage<Record<string, string[]>>(
     'academic_missed_sessions_v1',
@@ -32,7 +29,6 @@ export function App() {
   const currentMissedList = missedSessionsMap[currentWeekKey] || [];
   const missedSet = new Set(currentMissedList);
 
-  // Ders durum toggle (girildi <-> kaçırıldı)
   const handleToggleSession = (sessionId: string) => {
     const updated = missedSet.has(sessionId)
       ? currentMissedList.filter((id) => id !== sessionId)
@@ -44,7 +40,31 @@ export function App() {
     });
   };
 
-  // Haftayı Arşivleme / Yeni Haftaya Sıfırlama
+  // TEKİL OTURUMU SİL
+  const handleDeleteSession = (sessionId: string) => {
+    setSessions(sessions.filter((s) => s.id !== sessionId));
+    if (missedSet.has(sessionId)) {
+      setMissedSessionsMap({
+        ...missedSessionsMap,
+        [currentWeekKey]: currentMissedList.filter((id) => id !== sessionId),
+      });
+    }
+  };
+
+  // DERSİ VE BAĞLI TÜM OTURUMLARI TAMAMEN SİL
+  const handleDeleteCourse = (courseId: string) => {
+    const sessionIdsToDelete = new Set(sessions.filter((s) => s.courseId === courseId).map((s) => s.id));
+    
+    setCourses(courses.filter((c) => c.id !== courseId));
+    setSessions(sessions.filter((s) => s.courseId !== courseId));
+
+    // Aktif haftadaki kaçırılma kayıtlarından da düş
+    setMissedSessionsMap({
+      ...missedSessionsMap,
+      [currentWeekKey]: currentMissedList.filter((id) => !sessionIdsToDelete.has(id)),
+    });
+  };
+
   const handleArchiveWeek = () => {
     const missedCount = currentMissedList.length;
     const confirmMessage =
@@ -62,7 +82,6 @@ export function App() {
     }
   };
 
-  // To-Do İşlemleri
   const handleToggleTask = (taskId: string) => {
     setTasks(tasks.map((t) => (t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t)));
   };
@@ -75,14 +94,12 @@ export function App() {
     setTasks(tasks.filter((t) => t.id !== taskId));
   };
 
-  // Izgaraya tıklandığında modalı açma
   const handleSlotClick = (day: number, hour: number) => {
     setModalInitialDay(day);
     setModalInitialTime(`${String(hour).padStart(2, '0')}:40`);
     setIsModalOpen(true);
   };
 
-  // Yeni ders/oturum kaydetme
   const handleSaveSession = (newSession: CourseSession, newCourse?: Course) => {
     if (newCourse) {
       setCourses([...courses, newCourse]);
@@ -92,7 +109,7 @@ export function App() {
 
   return (
     <div className="flex h-screen w-screen bg-hud-bg text-hud-text p-4 gap-4 overflow-hidden">
-      {/* Sol Panel: Devamsızlık + To-Do */}
+      {/* Sol Panel */}
       <div className="w-80 flex flex-col gap-4 flex-shrink-0 h-full">
         <div className="bg-hud-card border border-hud-border rounded-xl p-3.5 flex items-center justify-between shadow-lg">
           <div className="flex items-center gap-2">
@@ -110,6 +127,7 @@ export function App() {
           courses={courses}
           sessions={sessions}
           missedSessionIdsMap={missedSessionsMap}
+          onDeleteCourse={handleDeleteCourse}
         />
 
         <TodoList
@@ -120,7 +138,7 @@ export function App() {
         />
       </div>
 
-      {/* Sağ Panel: Takvim */}
+      {/* Sağ Panel */}
       <div className="flex-1 flex flex-col gap-3 min-w-0 h-full">
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
@@ -160,12 +178,12 @@ export function App() {
             sessions={sessions}
             missedSessionIds={missedSet}
             onToggleSession={handleToggleSession}
+            onDeleteSession={handleDeleteSession}
             onSlotClick={handleSlotClick}
           />
         </div>
       </div>
 
-      {/* Ders Ekleme Modalı */}
       <AddCourseModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
