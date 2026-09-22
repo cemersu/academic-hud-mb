@@ -96,6 +96,19 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
             </p>
           </div>
         </div>
+         {/* 6. Uygulama Olarak Kullanmak */}
+          <div className="p-3 rounded-lg bg-[#161822] border border-hud-border/70 flex flex-col gap-1.5">
+            <div className="flex items-center gap-2 text-hud-red font-semibold">
+              <Activity className="w-3.5 h-3.5" />
+              <span>Ipad Ana Ekrana Eklemek</span>
+            </div>
+            <p className="text-hud-muted leading-relaxed">
+              Uygulamayı uzun vadeli kullanmak için gerekli bir adım.
+              <br />• Sağ üstten paylaşa tıkla. Daha fazla veya view more yazısına tıkla.
+              <br />• Add to home screen tuşuna bas(Ana ekrana ekle).
+              <br />• İstediğin adı ver, Open as WebApp seçeneğinin açık olmasına dikkat et.
+            </p>
+          </div>
 
         {/* Kapat Butonu */}
         <div className="flex justify-end pt-2 border-t border-hud-border">
