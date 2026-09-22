@@ -7,6 +7,7 @@ import { AttendanceTracker } from './components/attendance/AttendanceTracker';
 import { TodoList } from './components/todo/TodoList';
 import { AddCourseModal } from './components/modals/AddCourseModal';
 import { HelpModal } from './components/modals/HelpModal';
+import { RotateNotice } from './components/common/RotateNotice';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { INITIAL_COURSES, INITIAL_SESSIONS, INITIAL_TASKS } from './utils/initialData';
 import { getCurrentWeekKey } from './utils/timeUtils';
@@ -17,13 +18,13 @@ export function App() {
   const [sessions, setSessions] = useLocalStorage<CourseSession[]>('academic_sessions_v1', INITIAL_SESSIONS);
   const [tasks, setTasks] = useLocalStorage<Task[]>('academic_tasks_v1', INITIAL_TASKS);
 
-  // Modal State'leri
+  // Modal Durumları
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [modalInitialDay, setModalInitialDay] = useState(1);
   const [modalInitialTime, setModalInitialTime] = useState('08:40');
 
-  // Devamsızlık Arşivi
+  // Devamsızlık Takibi & Arşiv
   const currentWeekKey = getCurrentWeekKey();
   const [missedSessionsMap, setMissedSessionsMap] = useLocalStorage<Record<string, string[]>>(
     'academic_missed_sessions_v1',
@@ -69,7 +70,7 @@ export function App() {
     });
   };
 
-  // Haftayı Arşivleme / Yeni Haftaya Sıfırlama
+  // Haftayı Arşivle
   const handleArchiveWeek = () => {
     const missedCount = currentMissedList.length;
     const confirmMessage =
@@ -87,7 +88,7 @@ export function App() {
     }
   };
 
-  // To-Do İşlemleri
+  // Yapılacaklar Listesi İşlemleri
   const handleToggleTask = (taskId: string) => {
     setTasks(tasks.map((t) => (t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t)));
   };
@@ -100,7 +101,7 @@ export function App() {
     setTasks(tasks.filter((t) => t.id !== taskId));
   };
 
-  // Izgaraya tıklandığında modalı açma
+  // Izgaraya tıklayarak ders ekleme
   const handleSlotClick = (day: number, hour: number) => {
     setModalInitialDay(day);
     setModalInitialTime(`${String(hour).padStart(2, '0')}:40`);
@@ -116,110 +117,119 @@ export function App() {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-hud-bg text-hud-text p-4 gap-4 overflow-hidden">
-      {/* Sol Panel: Devamsızlık + To-Do */}
-      <div className="w-80 flex flex-col gap-4 flex-shrink-0 h-full">
-        <div className="bg-hud-card border border-hud-border rounded-xl p-3.5 flex items-center justify-between shadow-lg">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-hud-primary animate-pulse" />
-            <span className="font-mono text-sm tracking-wider font-semibold text-hud-text">
-              ACADEMIC HUD
-            </span>
-          </div>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-hud-border text-hud-muted">
-            {currentWeekKey}
-          </span>
-        </div>
+    <>
+      {/* Mobilde dikey tutulursa çıkan yönlendirme ekranı */}
+      <RotateNotice />
 
-        <AttendanceTracker
-          courses={courses}
-          sessions={sessions}
-          missedSessionIdsMap={missedSessionsMap}
-          onDeleteCourse={handleDeleteCourse}
-        />
-
-        <TodoList
-          tasks={tasks}
-          onToggleTask={handleToggleTask}
-          onAddTask={handleAddTask}
-          onDeleteTask={handleDeleteTask}
-        />
-      </div>
-
-      {/* Sağ Panel: Takvim */}
-      <div className="flex-1 flex flex-col gap-3 min-w-0 h-full">
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-hud-primary" />
-            <span className="font-mono text-xs uppercase tracking-widest text-hud-text">
-              Haftalık Ders Programı
+      {/* Ana Ekran Kapsayıcısı: iPhone çentik (Safe Area) destekli */}
+      <div className="flex h-screen w-screen bg-hud-bg text-hud-text p-2 sm:p-4 gap-2 sm:gap-4 overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
+        
+        {/* Sol Panel: Yatay mobilde 220px, iPad ve masaüstünde 320px (w-80) */}
+        <div className="w-56 sm:w-80 flex flex-col gap-2 sm:gap-4 flex-shrink-0 h-full">
+          <div className="bg-hud-card border border-hud-border rounded-xl p-2.5 sm:p-3.5 flex items-center justify-between shadow-lg">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-hud-primary animate-pulse" />
+              <span className="font-mono text-xs sm:text-sm tracking-wider font-semibold text-hud-text">
+                ACADEMIC HUD
+              </span>
+            </div>
+            <span className="text-[10px] sm:text-[11px] font-mono px-2 py-0.5 rounded bg-hud-border text-hud-muted">
+              {currentWeekKey}
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* NASIL KULLANILIR TUŞU */}
-            <button
-              onClick={() => setIsHelpOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#171A26] hover:bg-[#202536] text-xs rounded-lg transition-colors border border-hud-border text-hud-text hover:border-hud-borderLight shadow-sm"
-              title="Kullanım Kılavuzu"
-            >
-              <HelpCircle className="w-3.5 h-3.5 text-hud-primary" />
-              <span>Nasıl Kullanılır</span>
-            </button>
-
-            {/* HAFTAYI ARŞİVLE TUŞU */}
-            <button
-              onClick={handleArchiveWeek}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#171A26] hover:bg-[#202536] text-xs rounded-lg transition-colors border border-hud-border text-hud-text hover:border-hud-borderLight shadow-sm"
-              title="Mevcut haftanın durumunu kaydeder ve takvimi yeni haftaya sıfırlar"
-            >
-              <ArchiveRestore className="w-3.5 h-3.5 text-hud-yellow" />
-              <span>Haftayı Arşivle</span>
-            </button>
-
-            {/* DERS EKLE TUŞU */}
-            <button
-              onClick={() => {
-                setModalInitialDay(1);
-                setModalInitialTime('08:40');
-                setIsModalOpen(true);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-hud-primary hover:bg-blue-600 text-xs rounded-lg transition-colors text-white font-medium shadow-md shadow-blue-500/20"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Ders Ekle</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 min-h-0">
-          <CalendarGrid
+          <AttendanceTracker
             courses={courses}
             sessions={sessions}
-            missedSessionIds={missedSet}
-            onToggleSession={handleToggleSession}
-            onDeleteSession={handleDeleteSession}
-            onSlotClick={handleSlotClick}
+            missedSessionIdsMap={missedSessionsMap}
+            onDeleteCourse={handleDeleteCourse}
+          />
+
+          <TodoList
+            tasks={tasks}
+            onToggleTask={handleToggleTask}
+            onAddTask={handleAddTask}
+            onDeleteTask={handleDeleteTask}
           />
         </div>
+
+        {/* Sağ Panel: Haftalık Takvim */}
+        <div className="flex-1 flex flex-col gap-2 sm:gap-3 min-w-0 h-full">
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-hud-primary" />
+              <span className="font-mono text-[11px] sm:text-xs uppercase tracking-widest text-hud-text truncate">
+                Haftalık Ders Programı
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Nasıl Kullanılır */}
+              <button
+                onClick={() => setIsHelpOpen(true)}
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-[#171A26] hover:bg-[#202536] text-[11px] sm:text-xs rounded-lg transition-colors border border-hud-border text-hud-text hover:border-hud-borderLight shadow-sm"
+                title="Kullanım Kılavuzu"
+              >
+                <HelpCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-hud-primary" />
+                <span className="hidden xs:inline">Nasıl Kullanılır</span>
+                <span className="xs:hidden">Yardım</span>
+              </button>
+
+              {/* Haftayı Arşivle */}
+              <button
+                onClick={handleArchiveWeek}
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-[#171A26] hover:bg-[#202536] text-[11px] sm:text-xs rounded-lg transition-colors border border-hud-border text-hud-text hover:border-hud-borderLight shadow-sm"
+                title="Mevcut haftanın durumunu kaydeder ve takvimi yeni haftaya sıfırlar"
+              >
+                <ArchiveRestore className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-hud-yellow" />
+                <span className="hidden xs:inline">Haftayı Arşivle</span>
+                <span className="xs:hidden">Arşivle</span>
+              </button>
+
+              {/* Ders Ekle */}
+              <button
+                onClick={() => {
+                  setModalInitialDay(1);
+                  setModalInitialTime('08:40');
+                  setIsModalOpen(true);
+                }}
+                className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-hud-primary hover:bg-blue-600 text-[11px] sm:text-xs rounded-lg transition-colors text-white font-medium shadow-md shadow-blue-500/20"
+              >
+                <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span>Ders Ekle</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 min-h-0">
+            <CalendarGrid
+              courses={courses}
+              sessions={sessions}
+              missedSessionIds={missedSet}
+              onToggleSession={handleToggleSession}
+              onDeleteSession={handleDeleteSession}
+              onSlotClick={handleSlotClick}
+            />
+          </div>
+        </div>
+
+        {/* Ders Ekleme Modalı */}
+        <AddCourseModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          courses={courses}
+          initialDay={modalInitialDay}
+          initialStartTime={modalInitialTime}
+          onSave={handleSaveSession}
+        />
+
+        {/* Kullanım Kılavuzu Modalı */}
+        <HelpModal
+          isOpen={isHelpOpen}
+          onClose={() => setIsHelpOpen(false)}
+        />
       </div>
-
-      {/* Ders Ekleme Modalı */}
-      <AddCourseModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        courses={courses}
-        initialDay={modalInitialDay}
-        initialStartTime={modalInitialTime}
-        onSave={handleSaveSession}
-      />
-
-      {/* Nasıl Kullanılır Kılavuz Modalı */}
-      <HelpModal
-        isOpen={isHelpOpen}
-        onClose={() => setIsHelpOpen(false)}
-      />
-    </div>
+    </>
   );
 }
 
