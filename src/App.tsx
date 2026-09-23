@@ -186,7 +186,7 @@ export function App() {
               >
                 <HelpCircle className="w-3.5 h-3.5 text-hud-primary" />
                 <span className="hidden xs:inline">Kılavuz</span>
-                <span className="xs:hidden">Yardım</span>
+                <span className="xs:hidden">Nasıl Kullanılır</span>
               </button>
 
               <button
