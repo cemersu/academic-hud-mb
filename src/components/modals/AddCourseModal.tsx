@@ -12,29 +12,24 @@ interface AddCourseModalProps {
   onSave: (session: CourseSession, newCourse?: Course) => void;
 }
 
-// 08:00 - 18:00 aralığındaki 10'ar dakikalık adımlarla saat listesi
-const generateTimeSlots = (startHour: number, endHour: number) => {
-  const slots: string[] = [];
-  for (let h = startHour; h <= endHour; h++) {
-    for (let m = 0; m < 60; m += 10) {
-      if (h === endHour && m > 0) break;
-      slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
-    }
-  }
-  return slots;
-};
-
-const START_TIME_OPTIONS = generateTimeSlots(8, 17); // Başlangıç en geç 17:50 olabilir
-const END_TIME_OPTIONS = generateTimeSlots(8, 18);   // Bitiş en geç 18:00 olabilir
-
-// Başlangıçtan 1 saat sonrasını hesapla (maksimum 18:00 ile sınırla)
-const addOneHour = (timeStr: string) => {
+// Başlangıç saatinden 1 saat sonrasını hesaplar (18:00'i aşamaz)
+const addOneHour = (timeStr: string): string => {
   const [h, m] = timeStr.split(':').map(Number);
-  const targetH = Math.min(h + 1, 18);
-  if (targetH === 18 && m > 0) {
+  const targetH = h + 1;
+  const minuteStr = String(m).padStart(2, '0');
+
+  if (targetH > 18 || (targetH === 18 && m > 0)) {
     return '18:00';
   }
-  return `${String(targetH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  return `${String(targetH).padStart(2, '0')}:${minuteStr}`;
+};
+
+// Saatin 08:00 - 18:00 aralığında olup olmadığını doğrular
+const clampTime = (timeStr: string, fallback: string): string => {
+  if (!timeStr) return fallback;
+  if (timeStr < '08:00') return '08:00';
+  if (timeStr > '18:00') return '18:00';
+  return timeStr;
 };
 
 const CourseForm: React.FC<{
@@ -49,24 +44,36 @@ const CourseForm: React.FC<{
   );
   const [newCourseName, setNewCourseName] = useState('');
   const [maxAbsence, setMaxAbsence] = useState('8');
-  
+
   const validDay = (initialDay >= 1 && initialDay <= 5 ? initialDay : 1) as 1 | 2 | 3 | 4 | 5;
   const [dayOfWeek, setDayOfWeek] = useState<1 | 2 | 3 | 4 | 5>(validDay);
 
-  // Başlangıç saati 08:00 - 17:50 aralığında değilse 08:40'a çek
-  const validStartTime = START_TIME_OPTIONS.includes(initialStartTime) ? initialStartTime : '08:40';
-  const [startTime, setStartTime] = useState(validStartTime);
-  const [endTime, setEndTime] = useState(() => addOneHour(validStartTime));
+  const initialStart = clampTime(initialStartTime, '08:40');
+  const [startTime, setStartTime] = useState(initialStart);
+  const [endTime, setEndTime] = useState(() => addOneHour(initialStart));
   const [room, setRoom] = useState('Lecture');
 
-  // Başlangıç saati değiştiğinde bitiş saatini otomatik 1 saat sonrasına atar
+  // Başlangıç değiştiğinde bitişi otomatik 1 saat sonrasına ayarlar
   const handleStartTimeChange = (newStart: string) => {
     setStartTime(newStart);
-    setEndTime(addOneHour(newStart));
+    if (newStart) {
+      setEndTime(addOneHour(newStart));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 08:00 - 18:00 aralık ve mantık kontrolleri
+    if (startTime < '08:00' || startTime > '18:00') {
+      alert('Başlangıç saati 08:00 ile 18:00 arasında olmalıdır.');
+      return;
+    }
+
+    if (endTime < '08:00' || endTime > '18:00') {
+      alert('Bitiş saati 08:00 ile 18:00 arasında olmalıdır.');
+      return;
+    }
 
     if (endTime <= startTime) {
       alert('Bitiş saati başlangıç saatinden sonra olmalıdır.');
@@ -89,7 +96,7 @@ const CourseForm: React.FC<{
     const newSession: CourseSession = {
       id: `s_${Date.now()}`,
       courseId: targetCourseId,
-      dayOfWeek: dayOfWeek,
+      dayOfWeek,
       startTime,
       endTime,
       room: room.trim() || 'Lecture',
@@ -98,9 +105,6 @@ const CourseForm: React.FC<{
     onSave(newSession, createdCourse);
     onClose();
   };
-
-  // Bitiş saatleri seçeneği: Başlangıç saatinden sonraki saatleri filtreler
-  const availableEndTimes = END_TIME_OPTIONS.filter((t) => t > startTime);
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 text-xs">
@@ -165,36 +169,31 @@ const CourseForm: React.FC<{
         </select>
       </div>
 
-      {/* Saat Aralıkları (08:00 - 18:00 Arası) */}
+      {/* Saat Girişleri (08:00 - 18:00 aralığında serbest dakika) */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <label className="text-hud-muted font-mono">BAŞLANGIÇ</label>
-          <select
+          <input
+            type="time"
+            min="08:00"
+            max="18:00"
             value={startTime}
             onChange={(e) => handleStartTimeChange(e.target.value)}
             className="bg-[#181B26] border border-hud-border rounded-lg px-3 py-2 text-hud-text focus:outline-none"
-          >
-            {START_TIME_OPTIONS.map((slot) => (
-              <option key={slot} value={slot}>
-                {slot}
-              </option>
-            ))}
-          </select>
+            required
+          />
         </div>
-
         <div className="flex flex-col gap-1.5">
           <label className="text-hud-muted font-mono">BİTİŞ</label>
-          <select
+          <input
+            type="time"
+            min={startTime || '08:00'}
+            max="18:00"
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
             className="bg-[#181B26] border border-hud-border rounded-lg px-3 py-2 text-hud-text focus:outline-none"
-          >
-            {availableEndTimes.map((slot) => (
-              <option key={slot} value={slot}>
-                {slot}
-              </option>
-            ))}
-          </select>
+            required
+          />
         </div>
       </div>
 
