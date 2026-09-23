@@ -121,15 +121,14 @@ export function App() {
   return (
     <>
       {/* 
-        Artık mobil cihazlar için dikey kaydırma (scroll) tasarımına geçtiğimizden, 
-        kullanıcıyı yatay çevirmeye zorlayan <RotateNotice /> bileşenini kaldırdık. 
+        Sınır noktasını lg (1024px) yaptık. 
+        1024px altındaki tüm cihazlarda (dikey/yatay tüm telefonlar) flex-col (alt alta) dizilecek. 
+        h-[100dvh] ile mobil tarayıcı adres çubuğu hesaba katılarak tam ekran yüksekliği sağlanacak.
       */}
-
-      {/* ANA KAPSAYICI: Mobilde flex-col (alt alta) ve kaydırılabilir, Tablet/Desktopta flex-row (yan yana) ve sabit */}
-      <div className="flex flex-col md:flex-row h-screen w-screen bg-hud-bg text-hud-text p-3 md:p-4 gap-4 overflow-y-auto md:overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] custom-scrollbar">
+      <div className="flex flex-col lg:flex-row h-[100dvh] w-screen bg-hud-bg text-hud-text p-3 lg:p-4 gap-4 overflow-y-auto lg:overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] custom-scrollbar">
         
-        {/* SOL PANEL (Mobilde En Üstteki Blok) */}
-        <div className="w-full md:w-80 flex flex-col gap-4 flex-shrink-0 md:h-full">
+        {/* SOL PANEL */}
+        <div className="w-full lg:w-80 flex flex-col gap-4 flex-shrink-0 lg:h-full">
           {/* Logo ve Hafta Etiketi */}
           <div className="bg-hud-card border border-hud-border rounded-xl p-3.5 flex items-center justify-between shadow-lg">
             <div className="flex items-center gap-2">
@@ -143,8 +142,7 @@ export function App() {
             </span>
           </div>
 
-          {/* Mobilde alt alta sıralı, Desktop'ta ise kendi içinde kaydırılabilir alan */}
-          <div className="flex flex-col gap-4 md:flex-1 md:min-h-0 md:overflow-y-auto md:pr-0.5 custom-scrollbar">
+          <div className="flex flex-col gap-4 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-0.5 custom-scrollbar">
             <AttendanceTracker
               courses={courses}
               sessions={sessions}
@@ -161,8 +159,8 @@ export function App() {
           </div>
         </div>
 
-        {/* SAĞ PANEL (Mobilde En Alttaki Takvim Bloğu) */}
-        <div className="w-full md:flex-1 flex flex-col gap-3 min-h-[650px] md:min-h-0 md:h-full pb-8 md:pb-0">
+        {/* SAĞ PANEL (Takvim) */}
+        <div className="w-full lg:flex-1 flex flex-col gap-3 min-h-[650px] lg:min-h-0 lg:h-full pb-8 lg:pb-0">
           
           {/* Üst Butonlar Barı */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
@@ -215,8 +213,7 @@ export function App() {
 
           {/* Takvim Izgarası */}
           <div className="flex-1 min-h-0 w-full overflow-x-auto custom-scrollbar">
-            {/* Mobilde takvim sıkışmasın diye min-w-[700px] eklendi; parmakla sağa-sola kaydırılabilir */}
-            <div className="min-w-[700px] md:min-w-0 h-full">
+            <div className="min-w-[700px] lg:min-w-0 h-full">
               <CalendarGrid
                 courses={courses}
                 sessions={sessions}
