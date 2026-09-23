@@ -7,24 +7,24 @@ import { AttendanceTracker } from './components/attendance/AttendanceTracker';
 import { TodoList } from './components/todo/TodoList';
 import { AddCourseModal } from './components/modals/AddCourseModal';
 import { HelpModal } from './components/modals/HelpModal';
+import { DataManagementModal, type ImportPayload } from './components/modals/DataManagementModal';
 import { RotateNotice } from './components/common/RotateNotice';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { INITIAL_COURSES, INITIAL_SESSIONS, INITIAL_TASKS } from './utils/initialData';
 import { getCurrentWeekKey } from './utils/timeUtils';
-import { Calendar, Plus, ArchiveRestore, HelpCircle } from 'lucide-react';
+import { Calendar, Plus, ArchiveRestore, HelpCircle, ArrowLeftRight } from 'lucide-react';
 
 export function App() {
   const [courses, setCourses] = useLocalStorage<Course[]>('academic_courses_v1', INITIAL_COURSES);
   const [sessions, setSessions] = useLocalStorage<CourseSession[]>('academic_sessions_v1', INITIAL_SESSIONS);
   const [tasks, setTasks] = useLocalStorage<Task[]>('academic_tasks_v1', INITIAL_TASKS);
 
-  // Modal Durumları
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isDataModalOpen, setIsDataModalOpen] = useState(false);
   const [modalInitialDay, setModalInitialDay] = useState(1);
   const [modalInitialTime, setModalInitialTime] = useState('08:40');
 
-  // Devamsızlık Takibi & Arşiv
   const currentWeekKey = getCurrentWeekKey();
   const [missedSessionsMap, setMissedSessionsMap] = useLocalStorage<Record<string, string[]>>(
     'academic_missed_sessions_v1',
@@ -34,7 +34,6 @@ export function App() {
   const currentMissedList = missedSessionsMap[currentWeekKey] || [];
   const missedSet = new Set(currentMissedList);
 
-  // Ders durum toggle (girildi <-> kaçırıldı)
   const handleToggleSession = (sessionId: string) => {
     const updated = missedSet.has(sessionId)
       ? currentMissedList.filter((id) => id !== sessionId)
@@ -46,7 +45,6 @@ export function App() {
     });
   };
 
-  // Tekil oturumu sil
   const handleDeleteSession = (sessionId: string) => {
     setSessions(sessions.filter((s) => s.id !== sessionId));
     if (missedSet.has(sessionId)) {
@@ -57,7 +55,6 @@ export function App() {
     }
   };
 
-  // Dersi ve bağlı oturumları tamamen sil
   const handleDeleteCourse = (courseId: string) => {
     const sessionIdsToDelete = new Set(sessions.filter((s) => s.courseId === courseId).map((s) => s.id));
 
@@ -70,7 +67,6 @@ export function App() {
     });
   };
 
-  // Haftayı Arşivle
   const handleArchiveWeek = () => {
     const missedCount = currentMissedList.length;
     const confirmMessage =
@@ -88,7 +84,18 @@ export function App() {
     }
   };
 
-  // Yapılacaklar Listesi İşlemleri
+  const handleImportData = (data: ImportPayload) => {
+    if (data.courses && data.sessions) {
+      setCourses(data.courses);
+      setSessions(data.sessions);
+
+      if (data.type === 'full_backup') {
+        if (data.tasks) setTasks(data.tasks);
+        if (data.missedSessionsMap) setMissedSessionsMap(data.missedSessionsMap);
+      }
+    }
+  };
+
   const handleToggleTask = (taskId: string) => {
     setTasks(tasks.map((t) => (t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t)));
   };
@@ -101,14 +108,12 @@ export function App() {
     setTasks(tasks.filter((t) => t.id !== taskId));
   };
 
-  // Izgaraya tıklayarak ders ekleme
   const handleSlotClick = (day: number, hour: number) => {
     setModalInitialDay(day);
     setModalInitialTime(`${String(hour).padStart(2, '0')}:40`);
     setIsModalOpen(true);
   };
 
-  // Yeni ders/oturum kaydetme
   const handleSaveSession = (newSession: CourseSession, newCourse?: Course) => {
     if (newCourse) {
       setCourses([...courses, newCourse]);
@@ -118,13 +123,10 @@ export function App() {
 
   return (
     <>
-      {/* Mobilde dikey tutulursa çıkan yönlendirme ekranı */}
       <RotateNotice />
 
-      {/* Ana Ekran Kapsayıcısı: iPhone çentik (Safe Area) destekli */}
       <div className="flex h-screen w-screen bg-hud-bg text-hud-text p-2 sm:p-4 gap-2 sm:gap-4 overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
         
-        {/* Sol Panel: Yatay mobilde 220px, iPad ve masaüstünde 320px (w-80) */}
         <div className="w-56 sm:w-80 flex flex-col gap-2 sm:gap-4 flex-shrink-0 h-full">
           <div className="bg-hud-card border border-hud-border rounded-xl p-2.5 sm:p-3.5 flex items-center justify-between shadow-lg">
             <div className="flex items-center gap-2">
@@ -153,7 +155,6 @@ export function App() {
           />
         </div>
 
-        {/* Sağ Panel: Haftalık Takvim */}
         <div className="flex-1 flex flex-col gap-2 sm:gap-3 min-w-0 h-full">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
@@ -164,7 +165,16 @@ export function App() {
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2">
-              {/* Nasıl Kullanılır */}
+              <button
+                onClick={() => setIsDataModalOpen(true)}
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-[#171A26] hover:bg-[#202536] text-[11px] sm:text-xs rounded-lg transition-colors border border-hud-border text-hud-text hover:border-hud-borderLight shadow-sm"
+                title="Ders programını veya verilerini içe/dışa aktar"
+              >
+                <ArrowLeftRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-hud-green" />
+                <span className="hidden xs:inline">Aktar</span>
+                <span className="xs:hidden">Yedek</span>
+              </button>
+
               <button
                 onClick={() => setIsHelpOpen(true)}
                 className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-[#171A26] hover:bg-[#202536] text-[11px] sm:text-xs rounded-lg transition-colors border border-hud-border text-hud-text hover:border-hud-borderLight shadow-sm"
@@ -175,7 +185,6 @@ export function App() {
                 <span className="xs:hidden">Yardım</span>
               </button>
 
-              {/* Haftayı Arşivle */}
               <button
                 onClick={handleArchiveWeek}
                 className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-[#171A26] hover:bg-[#202536] text-[11px] sm:text-xs rounded-lg transition-colors border border-hud-border text-hud-text hover:border-hud-borderLight shadow-sm"
@@ -186,7 +195,6 @@ export function App() {
                 <span className="xs:hidden">Arşivle</span>
               </button>
 
-              {/* Ders Ekle */}
               <button
                 onClick={() => {
                   setModalInitialDay(1);
@@ -213,7 +221,6 @@ export function App() {
           </div>
         </div>
 
-        {/* Ders Ekleme Modalı */}
         <AddCourseModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
@@ -223,10 +230,19 @@ export function App() {
           onSave={handleSaveSession}
         />
 
-        {/* Kullanım Kılavuzu Modalı */}
         <HelpModal
           isOpen={isHelpOpen}
           onClose={() => setIsHelpOpen(false)}
+        />
+
+        <DataManagementModal
+          isOpen={isDataModalOpen}
+          onClose={() => setIsDataModalOpen(false)}
+          courses={courses}
+          sessions={sessions}
+          tasks={tasks}
+          missedSessionsMap={missedSessionsMap}
+          onImportData={handleImportData}
         />
       </div>
     </>
