@@ -12,25 +12,11 @@ interface AddCourseModalProps {
   onSave: (session: CourseSession, newCourse?: Course) => void;
 }
 
-// Başlangıç saatinden 1 saat sonrasını hesaplar (18:00'i aşamaz)
-const addOneHour = (timeStr: string): string => {
-  const [h, m] = timeStr.split(':').map(Number);
-  const targetH = h + 1;
-  const minuteStr = String(m).padStart(2, '0');
+// 08'den 18'e kadar saat listesi
+const HOURS = Array.from({ length: 11 }, (_, i) => String(i + 8).padStart(2, '0'));
 
-  if (targetH > 18 || (targetH === 18 && m > 0)) {
-    return '18:00';
-  }
-  return `${String(targetH).padStart(2, '0')}:${minuteStr}`;
-};
-
-// Saatin 08:00 - 18:00 aralığında olup olmadığını doğrular
-const clampTime = (timeStr: string, fallback: string): string => {
-  if (!timeStr) return fallback;
-  if (timeStr < '08:00') return '08:00';
-  if (timeStr > '18:00') return '18:00';
-  return timeStr;
-};
+// 00'dan 59'a kadar dakika listesi
+const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
 const CourseForm: React.FC<{
   courses: Course[];
@@ -48,32 +34,38 @@ const CourseForm: React.FC<{
   const validDay = (initialDay >= 1 && initialDay <= 5 ? initialDay : 1) as 1 | 2 | 3 | 4 | 5;
   const [dayOfWeek, setDayOfWeek] = useState<1 | 2 | 3 | 4 | 5>(validDay);
 
-  const initialStart = clampTime(initialStartTime, '08:40');
-  const [startTime, setStartTime] = useState(initialStart);
-  const [endTime, setEndTime] = useState(() => addOneHour(initialStart));
+  // Başlangıç saatini ayrıştır (varsayılan: 08:40)
+  const [rawInitH, rawInitM] = (initialStartTime || '08:40').split(':');
+  const safeInitH = HOURS.includes(rawInitH) ? rawInitH : '08';
+  const safeInitM = MINUTES.includes(rawInitM) ? rawInitM : '40';
+
+  const [startHour, setStartHour] = useState(safeInitH);
+  const [startMinute, setStartMinute] = useState(safeInitM);
+
+  // Bitiş saatini başlangıçtan 1 saat sonrasına kur (maks 18)
+  const initialEndH = String(Math.min(Number(safeInitH) + 1, 18)).padStart(2, '0');
+  const [endHour, setEndHour] = useState(initialEndH);
+  const [endMinute, setEndMinute] = useState(safeInitM);
+
   const [room, setRoom] = useState('Lecture');
 
-  // Başlangıç değiştiğinde bitişi otomatik 1 saat sonrasına ayarlar
-  const handleStartTimeChange = (newStart: string) => {
-    setStartTime(newStart);
-    if (newStart) {
-      setEndTime(addOneHour(newStart));
-    }
+  // Başlangıç saati değiştiğinde bitişi 1 saat sonrasına atar
+  const handleStartHourChange = (newH: string) => {
+    setStartHour(newH);
+    const targetEndH = Math.min(Number(newH) + 1, 18);
+    setEndHour(String(targetEndH).padStart(2, '0'));
+  };
+
+  const handleStartMinuteChange = (newM: string) => {
+    setStartMinute(newM);
+    setEndMinute(newM);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 08:00 - 18:00 aralık ve mantık kontrolleri
-    if (startTime < '08:00' || startTime > '18:00') {
-      alert('Başlangıç saati 08:00 ile 18:00 arasında olmalıdır.');
-      return;
-    }
-
-    if (endTime < '08:00' || endTime > '18:00') {
-      alert('Bitiş saati 08:00 ile 18:00 arasında olmalıdır.');
-      return;
-    }
+    const startTime = `${startHour}:${startMinute}`;
+    const endTime = `${endHour}:${endMinute}`;
 
     if (endTime <= startTime) {
       alert('Bitiş saati başlangıç saatinden sonra olmalıdır.');
@@ -169,31 +161,66 @@ const CourseForm: React.FC<{
         </select>
       </div>
 
-      {/* Saat Girişleri (08:00 - 18:00 aralığında serbest dakika) */}
+      {/* Saat Aralıkları (Saat & Dakika Ayrı Select Box) */}
       <div className="grid grid-cols-2 gap-3">
+        {/* Başlangıç */}
         <div className="flex flex-col gap-1.5">
           <label className="text-hud-muted font-mono">BAŞLANGIÇ</label>
-          <input
-            type="time"
-            min="08:00"
-            max="18:00"
-            value={startTime}
-            onChange={(e) => handleStartTimeChange(e.target.value)}
-            className="bg-[#181B26] border border-hud-border rounded-lg px-3 py-2 text-hud-text focus:outline-none"
-            required
-          />
+          <div className="flex items-center gap-1.5">
+            <select
+              value={startHour}
+              onChange={(e) => handleStartHourChange(e.target.value)}
+              className="flex-1 bg-[#181B26] border border-hud-border rounded-lg px-2.5 py-2 text-hud-text text-center focus:outline-none"
+            >
+              {HOURS.map((h) => (
+                <option key={`start-h-${h}`} value={h}>
+                  {h}
+                </option>
+              ))}
+            </select>
+            <span className="text-hud-muted font-bold">:</span>
+            <select
+              value={startMinute}
+              onChange={(e) => handleStartMinuteChange(e.target.value)}
+              className="flex-1 bg-[#181B26] border border-hud-border rounded-lg px-2.5 py-2 text-hud-text text-center focus:outline-none"
+            >
+              {MINUTES.map((m) => (
+                <option key={`start-m-${m}`} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+
+        {/* Bitiş */}
         <div className="flex flex-col gap-1.5">
           <label className="text-hud-muted font-mono">BİTİŞ</label>
-          <input
-            type="time"
-            min={startTime || '08:00'}
-            max="18:00"
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-            className="bg-[#181B26] border border-hud-border rounded-lg px-3 py-2 text-hud-text focus:outline-none"
-            required
-          />
+          <div className="flex items-center gap-1.5">
+            <select
+              value={endHour}
+              onChange={(e) => setEndHour(e.target.value)}
+              className="flex-1 bg-[#181B26] border border-hud-border rounded-lg px-2.5 py-2 text-hud-text text-center focus:outline-none"
+            >
+              {HOURS.map((h) => (
+                <option key={`end-h-${h}`} value={h}>
+                  {h}
+                </option>
+              ))}
+            </select>
+            <span className="text-hud-muted font-bold">:</span>
+            <select
+              value={endMinute}
+              onChange={(e) => setEndMinute(e.target.value)}
+              className="flex-1 bg-[#181B26] border border-hud-border rounded-lg px-2.5 py-2 text-hud-text text-center focus:outline-none"
+            >
+              {MINUTES.map((m) => (
+                <option key={`end-m-${m}`} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
