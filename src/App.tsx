@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import type { Course } from './types';
-import type { CourseSession } from './types';
-import type { Task } from './types';
+import type { Course, CourseSession, Task } from './types';
 import { CalendarGrid } from './components/calendar/CalendarGrid';
 import { AttendanceTracker } from './components/attendance/AttendanceTracker';
 import { TodoList } from './components/todo/TodoList';
@@ -125,37 +123,39 @@ export function App() {
     <>
       <RotateNotice />
 
-      <div className="flex h-screen w-screen bg-hud-bg text-hud-text p-2 sm:p-4 gap-2 sm:gap-4 overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
+      <div className="flex h-screen w-screen bg-hud-bg text-hud-text p-1 sm:p-4 gap-1.5 sm:gap-4 overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] scale-[0.82] sm:scale-100 origin-top-left w-[122%] h-[122%] sm:w-screen sm:h-screen">
         
-        <div className="w-56 sm:w-80 flex flex-col gap-2 sm:gap-4 flex-shrink-0 h-full">
-          <div className="bg-hud-card border border-hud-border rounded-xl p-2.5 sm:p-3.5 flex items-center justify-between shadow-lg">
-            <div className="flex items-center gap-2">
+        <div className="w-44 sm:w-80 flex flex-col gap-1.5 sm:gap-4 flex-shrink-0 h-full overflow-hidden">
+          <div className="bg-hud-card border border-hud-border rounded-lg sm:rounded-xl p-2 sm:p-3.5 flex items-center justify-between shadow-lg">
+            <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-hud-primary animate-pulse" />
-              <span className="font-mono text-xs sm:text-sm tracking-wider font-semibold text-hud-text">
+              <span className="font-mono text-[11px] sm:text-sm tracking-wider font-semibold text-hud-text">
                 ACADEMIC HUD
               </span>
             </div>
-            <span className="text-[10px] sm:text-[11px] font-mono px-2 py-0.5 rounded bg-hud-border text-hud-muted">
+            <span className="text-[9px] sm:text-[11px] font-mono px-1.5 py-0.5 rounded bg-hud-border text-hud-muted">
               {currentWeekKey}
             </span>
           </div>
 
-          <AttendanceTracker
-            courses={courses}
-            sessions={sessions}
-            missedSessionIdsMap={missedSessionsMap}
-            onDeleteCourse={handleDeleteCourse}
-          />
+          <div className="flex-1 flex flex-col gap-1.5 sm:gap-4 min-h-0 overflow-y-auto pr-0.5 custom-scrollbar">
+            <AttendanceTracker
+              courses={courses}
+              sessions={sessions}
+              missedSessionIdsMap={missedSessionsMap}
+              onDeleteCourse={handleDeleteCourse}
+            />
 
-          <TodoList
-            tasks={tasks}
-            onToggleTask={handleToggleTask}
-            onAddTask={handleAddTask}
-            onDeleteTask={handleDeleteTask}
-          />
+            <TodoList
+              tasks={tasks}
+              onToggleTask={handleToggleTask}
+              onAddTask={handleAddTask}
+              onDeleteTask={handleDeleteTask}
+            />
+          </div>
         </div>
 
-        <div className="flex-1 flex flex-col gap-2 sm:gap-3 min-w-0 h-full">
+        <div className="flex-1 flex flex-col gap-1.5 sm:gap-3 min-w-0 h-full">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
               <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-hud-primary" />
@@ -182,7 +182,7 @@ export function App() {
               >
                 <HelpCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-hud-primary" />
                 <span className="hidden xs:inline">Nasıl Kullanılır</span>
-                <span className="xs:hidden">Nasıl Kullanılır</span>
+                <span className="xs:hidden">Yardım</span>
               </button>
 
               <button
