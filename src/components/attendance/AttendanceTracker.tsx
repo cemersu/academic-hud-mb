@@ -50,8 +50,8 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
           courses.map((course) => {
             const usedHours = getAbsenceHoursForCourse(course.id);
             const maxHours = course.maxAbsenceHours;
-            const percentage = Math.min(100, Math.round((usedHours / maxHours) * 100));
-            const isDanger = percentage >= 75;
+            const percentage = course.isAttendanceOptional ? 0 : Math.min(100, Math.round((usedHours / maxHours) * 100));
+            const isDanger = !course.isAttendanceOptional && percentage >= 75;
 
             return (
               <div key={course.id} className="group/item flex flex-col gap-1.5">
@@ -75,10 +75,13 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                     )}
                   </div>
                   <span className="font-mono text-[11px] text-hud-muted">
-                    <span className={isDanger ? 'text-hud-red font-bold' : 'text-hud-text'}>
-                      {usedHours}
-                    </span>{' '}
-                    / {maxHours} SAAT
+                    {course.isAttendanceOptional ? (
+                      <span className="text-hud-muted/70 italic text-[10px] px-1.5 py-0.5 rounded bg-hud-border/40">
+                        Zorunlu Değil
+                      </span>
+                    ) : (
+                      <><span className={isDanger ? 'text-hud-red font-bold' : 'text-hud-text'}>{usedHours}</span> / {maxHours} SAAT</>
+                    )}
                   </span>
                 </div>
 
@@ -86,7 +89,11 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                   <div
                     style={{ width: `${percentage}%` }}
                     className={`h-full rounded-full transition-all duration-300 ${
-                      isDanger ? 'bg-hud-red shadow-[0_0_8px_#EF4444]' : 'bg-hud-primary'
+                      course.isAttendanceOptional
+                        ? 'bg-transparent'
+                        : isDanger
+                        ? 'bg-hud-red shadow-[0_0_8px_#EF4444]'
+                        : 'bg-hud-primary'
                     }`}
                   />
                 </div>

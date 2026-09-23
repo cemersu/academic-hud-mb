@@ -3,6 +3,7 @@ export interface Course {
   name: string;            // Örn: "MATH-123"
   maxAbsenceHours: number; // Örn: 8
   color?: string;
+  isAttendanceOptional?: boolean;
 }
 
 export interface CourseSession {

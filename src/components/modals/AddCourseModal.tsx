@@ -30,6 +30,7 @@ const CourseForm: React.FC<{
   );
   const [newCourseName, setNewCourseName] = useState('');
   const [maxAbsence, setMaxAbsence] = useState('8');
+  const [isAttendanceOptional, setIsAttendanceOptional] = useState(false);
 
   const validDay = (initialDay >= 1 && initialDay <= 5 ? initialDay : 1) as 1 | 2 | 3 | 4 | 5;
   const [dayOfWeek, setDayOfWeek] = useState<1 | 2 | 3 | 4 | 5>(validDay);
@@ -81,7 +82,8 @@ const CourseForm: React.FC<{
       createdCourse = {
         id: targetCourseId,
         name: newCourseName.trim().toUpperCase(),
-        maxAbsenceHours: Number(maxAbsence) || 8,
+        maxAbsenceHours: isAttendanceOptional ? 0 : (Number(maxAbsence) || 8),
+        isAttendanceOptional,
       };
     }
 
@@ -110,7 +112,7 @@ const CourseForm: React.FC<{
         >
           {courses.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name} (Devamsızlık Limiti: {c.maxAbsenceHours}h)
+              {c.name} (Devamsızlık Limiti: {c.isAttendanceOptional ? 'Zorunlu Değil' : `${c.maxAbsenceHours}h`})
             </option>
           ))}
           <option value="NEW">+ Yeni Ders Tanımla...</option>
@@ -119,29 +121,46 @@ const CourseForm: React.FC<{
 
       {/* Yeni Ders Detayları */}
       {selectedCourseId === 'NEW' && (
-        <div className="grid grid-cols-2 gap-2 bg-[#161822] p-3 rounded-lg border border-hud-border/70">
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-hud-muted">DERS KODU</label>
-            <input
-              type="text"
-              placeholder="örn: MATH-123"
-              value={newCourseName}
-              onChange={(e) => setNewCourseName(e.target.value)}
-              className="bg-[#10121A] border border-hud-border rounded px-2.5 py-1.5 text-hud-text focus:outline-none"
-              required
-            />
+        <div className="flex flex-col gap-2.5 bg-[#161822] p-3 rounded-lg border border-hud-border/70">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] text-hud-muted">DERS KODU</label>
+              <input
+                type="text"
+                placeholder="örn: MATH-123"
+                value={newCourseName}
+                onChange={(e) => setNewCourseName(e.target.value)}
+                className="bg-[#10121A] border border-hud-border rounded px-2.5 py-1.5 text-hud-text focus:outline-none"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] text-hud-muted">DEVAMSIZLIK HAKKI (SAAT)</label>
+              <input
+                type="number"
+                value={isAttendanceOptional ? '0' : maxAbsence}
+                onChange={(e) => setMaxAbsence(e.target.value)}
+                disabled={isAttendanceOptional}
+                className={`bg-[#10121A] border border-hud-border rounded px-2.5 py-1.5 text-hud-text focus:outline-none transition-opacity ${
+                  isAttendanceOptional ? 'opacity-40 cursor-not-allowed' : ''
+                }`}
+                min="0"
+                required={!isAttendanceOptional}
+              />
+            </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-hud-muted">DEVAMSIZLIK HAKKI (SAAT)</label>
+
+          <label className="flex items-center gap-2 cursor-pointer select-none pt-0.5">
             <input
-              type="number"
-              value={maxAbsence}
-              onChange={(e) => setMaxAbsence(e.target.value)}
-              className="bg-[#10121A] border border-hud-border rounded px-2.5 py-1.5 text-hud-text focus:outline-none"
-              min="1"
-              required
+              type="checkbox"
+              checked={isAttendanceOptional}
+              onChange={(e) => setIsAttendanceOptional(e.target.checked)}
+              className="w-3.5 h-3.5 rounded bg-[#10121A] border-hud-border text-hud-primary focus:ring-0 cursor-pointer"
             />
-          </div>
+            <span className="text-[11px] text-hud-muted hover:text-hud-text transition-colors">
+              Bu derste devam zorunluluğu yok
+            </span>
+          </label>
         </div>
       )}
 
