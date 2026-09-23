@@ -12,7 +12,31 @@ interface AddCourseModalProps {
   onSave: (session: CourseSession, newCourse?: Course) => void;
 }
 
-// Form mantığını izole ettiğimiz iç bileşen
+// 08:00 - 18:00 aralığındaki 10'ar dakikalık adımlarla saat listesi
+const generateTimeSlots = (startHour: number, endHour: number) => {
+  const slots: string[] = [];
+  for (let h = startHour; h <= endHour; h++) {
+    for (let m = 0; m < 60; m += 10) {
+      if (h === endHour && m > 0) break;
+      slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    }
+  }
+  return slots;
+};
+
+const START_TIME_OPTIONS = generateTimeSlots(8, 17); // Başlangıç en geç 17:50 olabilir
+const END_TIME_OPTIONS = generateTimeSlots(8, 18);   // Bitiş en geç 18:00 olabilir
+
+// Başlangıçtan 1 saat sonrasını hesapla (maksimum 18:00 ile sınırla)
+const addOneHour = (timeStr: string) => {
+  const [h, m] = timeStr.split(':').map(Number);
+  const targetH = Math.min(h + 1, 18);
+  if (targetH === 18 && m > 0) {
+    return '18:00';
+  }
+  return `${String(targetH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+};
+
 const CourseForm: React.FC<{
   courses: Course[];
   initialDay: number;
@@ -28,20 +52,26 @@ const CourseForm: React.FC<{
   
   const validDay = (initialDay >= 1 && initialDay <= 5 ? initialDay : 1) as 1 | 2 | 3 | 4 | 5;
   const [dayOfWeek, setDayOfWeek] = useState<1 | 2 | 3 | 4 | 5>(validDay);
-  const [startTime, setStartTime] = useState(initialStartTime);
-  
-  // Bitiş saatini başlangıçtan 50 dk sonrasına kur
-  const getInitialEndTime = (start: string) => {
-    const [h, m] = start.split(':').map(Number);
-    const endH = String(h + 1).padStart(2, '0');
-    return `${endH}:${String(m).padStart(2, '0')}`;
-  };
 
-  const [endTime, setEndTime] = useState(() => getInitialEndTime(initialStartTime));
+  // Başlangıç saati 08:00 - 17:50 aralığında değilse 08:40'a çek
+  const validStartTime = START_TIME_OPTIONS.includes(initialStartTime) ? initialStartTime : '08:40';
+  const [startTime, setStartTime] = useState(validStartTime);
+  const [endTime, setEndTime] = useState(() => addOneHour(validStartTime));
   const [room, setRoom] = useState('Lecture');
+
+  // Başlangıç saati değiştiğinde bitiş saatini otomatik 1 saat sonrasına atar
+  const handleStartTimeChange = (newStart: string) => {
+    setStartTime(newStart);
+    setEndTime(addOneHour(newStart));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (endTime <= startTime) {
+      alert('Bitiş saati başlangıç saatinden sonra olmalıdır.');
+      return;
+    }
 
     let targetCourseId = selectedCourseId;
     let createdCourse: Course | undefined;
@@ -68,6 +98,9 @@ const CourseForm: React.FC<{
     onSave(newSession, createdCourse);
     onClose();
   };
+
+  // Bitiş saatleri seçeneği: Başlangıç saatinden sonraki saatleri filtreler
+  const availableEndTimes = END_TIME_OPTIONS.filter((t) => t > startTime);
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 text-xs">
@@ -132,27 +165,36 @@ const CourseForm: React.FC<{
         </select>
       </div>
 
-      {/* Saat Aralıkları */}
+      {/* Saat Aralıkları (08:00 - 18:00 Arası) */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <label className="text-hud-muted font-mono">BAŞLANGIÇ</label>
-          <input
-            type="time"
+          <select
             value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
+            onChange={(e) => handleStartTimeChange(e.target.value)}
             className="bg-[#181B26] border border-hud-border rounded-lg px-3 py-2 text-hud-text focus:outline-none"
-            required
-          />
+          >
+            {START_TIME_OPTIONS.map((slot) => (
+              <option key={slot} value={slot}>
+                {slot}
+              </option>
+            ))}
+          </select>
         </div>
+
         <div className="flex flex-col gap-1.5">
           <label className="text-hud-muted font-mono">BİTİŞ</label>
-          <input
-            type="time"
+          <select
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
             className="bg-[#181B26] border border-hud-border rounded-lg px-3 py-2 text-hud-text focus:outline-none"
-            required
-          />
+          >
+            {availableEndTimes.map((slot) => (
+              <option key={slot} value={slot}>
+                {slot}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
