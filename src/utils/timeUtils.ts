@@ -38,10 +38,21 @@ export function calculateBlockHeight(startTime: string, endTime: string): number
  * Bir ders seansının kaç akademik saate denk geldiğini yaklaşık hesaplar.
  * Örn: 50-60 dk = 1 saat, 90-110 dk = 2 saat.
  */
-export function calculateAcademicHours(startTime: string, endTime: string): number {
-  const durationMinutes = timeToMinutes(endTime) - timeToMinutes(startTime);
-  return Math.max(1, Math.round(durationMinutes / 45));
-}
+export const calculateAcademicHours = (startTime: string, endTime: string): number => {
+  const [startH, startM] = startTime.split(':').map(Number);
+  const [endH, endM] = endTime.split(':').map(Number);
+
+  const startTotalMinutes = startH * 60 + startM;
+  const endTotalMinutes = endH * 60 + endM;
+
+  const diffInMinutes = endTotalMinutes - startTotalMinutes;
+
+  // Hatalı girilmiş ters saatleri sıfırla
+  if (diffInMinutes <= 0) return 0;
+
+  // Toplam dakikayı 60'a böl ve en yakın saate yuvarla (örn: 120 dk = 2 saat)
+  return Math.round(diffInMinutes / 60);
+};
 
 /**
  * ISO hafta anahtarı üretir (örn: "2026-W39")
