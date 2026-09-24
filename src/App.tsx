@@ -1,109 +1,26 @@
 import { useState } from 'react';
-import type { Course, CourseSession, Task } from './types';
+import type { Course } from './types';
 import { CalendarGrid } from './components/calendar/CalendarGrid';
 import { AttendanceTracker } from './components/attendance/AttendanceTracker';
 import { TodoList } from './components/todo/TodoList';
 import { AddCourseModal } from './components/modals/AddCourseModal';
 import { HelpModal } from './components/modals/HelpModal';
-import { DataManagementModal, type ImportPayload } from './components/modals/DataManagementModal';
-import { useLocalStorage } from './hooks/useLocalStorage';
-import { INITIAL_COURSES, INITIAL_SESSIONS, INITIAL_TASKS } from './utils/initialData';
-import { getCurrentWeekKey } from './utils/timeUtils';
+import { DataManagementModal } from './components/modals/DataManagementModal';
+import { EditCourseModal } from './components/modals/EditCourseModal';
+import { useAcademicData } from './hooks/useAcademicData';
 import { Calendar, Plus, ArchiveRestore, HelpCircle, ArrowLeftRight } from 'lucide-react';
 
 export function App() {
-  const [courses, setCourses] = useLocalStorage<Course[]>('academic_courses_v1', INITIAL_COURSES);
-  const [sessions, setSessions] = useLocalStorage<CourseSession[]>('academic_sessions_v1', INITIAL_SESSIONS);
-  const [tasks, setTasks] = useLocalStorage<Task[]>('academic_tasks_v1', INITIAL_TASKS);
+  // Tüm veri ve iş mantığını tek bir kancadan (hook) çekiyoruz
+  const data = useAcademicData();
 
+  // Yalnızca Arayüz (UI) Durumları burada kalıyor
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isDataModalOpen, setIsDataModalOpen] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [modalInitialDay, setModalInitialDay] = useState(1);
   const [modalInitialTime, setModalInitialTime] = useState('08:40');
-
-  const currentWeekKey = getCurrentWeekKey();
-  const [missedSessionsMap, setMissedSessionsMap] = useLocalStorage<Record<string, string[]>>(
-    'academic_missed_sessions_v1',
-    {}
-  );
-
-  const currentMissedList = missedSessionsMap[currentWeekKey] || [];
-  const missedSet = new Set(currentMissedList);
-
-  const handleToggleSession = (sessionId: string) => {
-    const updated = missedSet.has(sessionId)
-      ? currentMissedList.filter((id) => id !== sessionId)
-      : [...currentMissedList, sessionId];
-
-    setMissedSessionsMap({
-      ...missedSessionsMap,
-      [currentWeekKey]: updated,
-    });
-  };
-
-  const handleDeleteSession = (sessionId: string) => {
-    setSessions(sessions.filter((s) => s.id !== sessionId));
-    if (missedSet.has(sessionId)) {
-      setMissedSessionsMap({
-        ...missedSessionsMap,
-        [currentWeekKey]: currentMissedList.filter((id) => id !== sessionId),
-      });
-    }
-  };
-
-  const handleDeleteCourse = (courseId: string) => {
-    const sessionIdsToDelete = new Set(sessions.filter((s) => s.courseId === courseId).map((s) => s.id));
-
-    setCourses(courses.filter((c) => c.id !== courseId));
-    setSessions(sessions.filter((s) => s.courseId !== courseId));
-
-    setMissedSessionsMap({
-      ...missedSessionsMap,
-      [currentWeekKey]: currentMissedList.filter((id) => !sessionIdsToDelete.has(id)),
-    });
-  };
-
-  const handleArchiveWeek = () => {
-    const missedCount = currentMissedList.length;
-    const confirmMessage =
-      missedCount > 0
-        ? `Bu haftaki ${missedCount} adet kaçırılan ders devamsızlık hanesine işlenecek ve takvim yeni haftaya sıfırlanacak. Onaylıyor musun?`
-        : 'Bu hafta hiç kaçırılan ders yok. Takvim yeni haftaya sıfırlansın mı?';
-
-    if (window.confirm(confirmMessage)) {
-      const archiveTimestampKey = `${currentWeekKey}_archived_${Date.now()}`;
-      setMissedSessionsMap({
-        ...missedSessionsMap,
-        [archiveTimestampKey]: currentMissedList,
-        [currentWeekKey]: [],
-      });
-    }
-  };
-
-  const handleImportData = (data: ImportPayload) => {
-    if (data.courses && data.sessions) {
-      setCourses(data.courses);
-      setSessions(data.sessions);
-
-      if (data.type === 'full_backup') {
-        if (data.tasks) setTasks(data.tasks);
-        if (data.missedSessionsMap) setMissedSessionsMap(data.missedSessionsMap);
-      }
-    }
-  };
-
-  const handleToggleTask = (taskId: string) => {
-    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t)));
-  };
-
-  const handleAddTask = (newTask: Task) => {
-    setTasks([newTask, ...tasks]);
-  };
-
-  const handleDeleteTask = (taskId: string) => {
-    setTasks(tasks.filter((t) => t.id !== taskId));
-  };
 
   const handleSlotClick = (day: number, hour: number) => {
     setModalInitialDay(day);
@@ -111,25 +28,12 @@ export function App() {
     setIsModalOpen(true);
   };
 
-  const handleSaveSession = (newSession: CourseSession, newCourse?: Course) => {
-    if (newCourse) {
-      setCourses([...courses, newCourse]);
-    }
-    setSessions([...sessions, newSession]);
-  };
-
   return (
     <>
-      {/* 
-        Sınır noktasını lg (1024px) yaptık. 
-        1024px altındaki tüm cihazlarda (dikey/yatay tüm telefonlar) flex-col (alt alta) dizilecek. 
-        h-[100dvh] ile mobil tarayıcı adres çubuğu hesaba katılarak tam ekran yüksekliği sağlanacak.
-      */}
       <div className="flex flex-col lg:flex-row h-[100dvh] w-screen bg-hud-bg text-hud-text p-3 lg:p-4 gap-4 overflow-y-auto lg:overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] custom-scrollbar">
         
         {/* SOL PANEL */}
         <div className="w-full lg:w-80 flex flex-col gap-4 flex-shrink-0 lg:h-full">
-          {/* Logo ve Hafta Etiketi */}
           <div className="bg-hud-card border border-hud-border rounded-xl p-3.5 flex items-center justify-between shadow-lg">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-hud-primary animate-pulse" />
@@ -138,23 +42,24 @@ export function App() {
               </span>
             </div>
             <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-hud-border text-hud-muted">
-              {currentWeekKey}
+              {data.currentWeekKey}
             </span>
           </div>
 
           <div className="flex flex-col gap-4 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-0.5 custom-scrollbar">
             <AttendanceTracker
-              courses={courses}
-              sessions={sessions}
-              missedSessionIdsMap={missedSessionsMap}
-              onDeleteCourse={handleDeleteCourse}
+              courses={data.courses}
+              sessions={data.sessions}
+              missedSessionIdsMap={data.missedSessionsMap}
+              onDeleteCourse={data.handleDeleteCourse}
+              onEditCourse={setEditingCourse} // Düzenleme butonunu bağladık
             />
 
             <TodoList
-              tasks={tasks}
-              onToggleTask={handleToggleTask}
-              onAddTask={handleAddTask}
-              onDeleteTask={handleDeleteTask}
+              tasks={data.tasks}
+              onToggleTask={data.handleToggleTask}
+              onAddTask={data.handleAddTask}
+              onDeleteTask={data.handleDeleteTask}
             />
           </div>
         </div>
@@ -162,7 +67,6 @@ export function App() {
         {/* SAĞ PANEL (Takvim) */}
         <div className="w-full lg:flex-1 flex flex-col gap-3 min-h-[650px] lg:min-h-0 lg:h-full pb-8 lg:pb-0">
           
-          {/* Üst Butonlar Barı */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-hud-primary" />
@@ -172,82 +76,70 @@ export function App() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => setIsDataModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#171A26] hover:bg-[#202536] text-xs rounded-lg transition-colors border border-hud-border text-hud-text hover:border-hud-borderLight shadow-sm"
-              >
+              <button onClick={() => setIsDataModalOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#171A26] hover:bg-[#202536] text-xs rounded-lg transition-colors border border-hud-border text-hud-text hover:border-hud-borderLight shadow-sm">
                 <ArrowLeftRight className="w-3.5 h-3.5 text-hud-green" />
                 <span>Aktar</span>
               </button>
-
-              <button
-                onClick={() => setIsHelpOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#171A26] hover:bg-[#202536] text-xs rounded-lg transition-colors border border-hud-border text-hud-text hover:border-hud-borderLight shadow-sm"
-              >
+              <button onClick={() => setIsHelpOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#171A26] hover:bg-[#202536] text-xs rounded-lg transition-colors border border-hud-border text-hud-text hover:border-hud-borderLight shadow-sm">
                 <HelpCircle className="w-3.5 h-3.5 text-hud-primary" />
                 <span className="hidden xs:inline">Kılavuz</span>
                 <span className="xs:hidden">Nasıl Kullanılır</span>
               </button>
-
-              <button
-                onClick={handleArchiveWeek}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#171A26] hover:bg-[#202536] text-xs rounded-lg transition-colors border border-hud-border text-hud-text hover:border-hud-borderLight shadow-sm"
-              >
+              <button onClick={data.handleArchiveWeek} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#171A26] hover:bg-[#202536] text-xs rounded-lg transition-colors border border-hud-border text-hud-text hover:border-hud-borderLight shadow-sm">
                 <ArchiveRestore className="w-3.5 h-3.5 text-hud-yellow" />
                 <span>Arşivle</span>
               </button>
-
-              <button
-                onClick={() => {
-                  setModalInitialDay(1);
-                  setModalInitialTime('08:40');
-                  setIsModalOpen(true);
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-hud-primary hover:bg-blue-600 text-xs rounded-lg transition-colors text-white font-medium shadow-md shadow-blue-500/20"
-              >
+              <button onClick={() => { setModalInitialDay(1); setModalInitialTime('08:40'); setIsModalOpen(true); }} className="flex items-center gap-1.5 px-3 py-1.5 bg-hud-primary hover:bg-blue-600 text-xs rounded-lg transition-colors text-white font-medium shadow-md shadow-blue-500/20">
                 <Plus className="w-3.5 h-3.5" />
                 <span>Ders Ekle</span>
               </button>
             </div>
           </div>
 
-          {/* Takvim Izgarası */}
           <div className="flex-1 min-h-0 w-full overflow-x-auto custom-scrollbar">
             <div className="min-w-[700px] lg:min-w-0 h-full">
               <CalendarGrid
-                courses={courses}
-                sessions={sessions}
-                missedSessionIds={missedSet}
-                onToggleSession={handleToggleSession}
-                onDeleteSession={handleDeleteSession}
+                courses={data.courses}
+                sessions={data.sessions}
+                missedSessionIds={data.missedSet}
+                onToggleSession={data.handleToggleSession}
+                onDeleteSession={data.handleDeleteSession}
                 onSlotClick={handleSlotClick}
               />
             </div>
           </div>
         </div>
 
+        {/* MODALLAR */}
         <AddCourseModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          courses={courses}
+          courses={data.courses}
           initialDay={modalInitialDay}
           initialStartTime={modalInitialTime}
-          onSave={handleSaveSession}
+          onSave={data.handleSaveSession}
+        />
+        
+        <EditCourseModal
+          course={editingCourse}
+          isOpen={!!editingCourse}
+          onClose={() => setEditingCourse(null)}
+          onSave={(updatedCourse) => {
+            data.handleEditCourse(updatedCourse);
+            setEditingCourse(null);
+          }}
         />
 
-        <HelpModal
-          isOpen={isHelpOpen}
-          onClose={() => setIsHelpOpen(false)}
-        />
-
+        <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+        
         <DataManagementModal
           isOpen={isDataModalOpen}
           onClose={() => setIsDataModalOpen(false)}
-          courses={courses}
-          sessions={sessions}
-          tasks={tasks}
-          missedSessionsMap={missedSessionsMap}
-          onImportData={handleImportData}
+          courses={data.courses}
+          sessions={data.sessions}
+          tasks={data.tasks}
+          missedSessionsMap={data.missedSessionsMap}
+          onImportData={data.handleImportData}
         />
       </div>
     </>

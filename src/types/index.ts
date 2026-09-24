@@ -4,6 +4,7 @@ export interface Course {
   maxAbsenceHours: number; // Örn: 8
   color?: string;
   isAttendanceOptional?: boolean;
+  attendanceRequirement?: number;
 }
 
 export interface CourseSession {
