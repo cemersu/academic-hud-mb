@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Activity, ArchiveRestore, CheckSquare, Plus, Trash2, Share } from 'lucide-react';
+import { X, Activity, ArchiveRestore, CheckSquare, Plus, Edit2, Share } from 'lucide-react';
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -32,15 +32,16 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
         {/* Kaydırılabilir İçerik Alanı */}
         <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-3 min-h-0 overscroll-contain">
+          
           {/* 1. Ders Ekleme */}
           <div className="p-3 rounded-lg bg-[#161822] border border-hud-border/70 flex flex-col gap-1.5">
             <div className="flex items-center gap-2 text-hud-primary font-semibold">
               <Plus className="w-3.5 h-3.5" />
-              <span>Ders Ekleme</span>
+              <span>Ders Ekleme ve Otomatik Hesaplama</span>
             </div>
             <p className="text-hud-muted leading-relaxed">
-              • Sağ üstteki <strong className="text-hud-text">"Ders Ekle"</strong> butonuna basabilir veya
-              <br />• Takvimde dersin olacağı <strong className="text-hud-text">boş saat dilimine doğrudan tıklayarak</strong> ekleyebilirsin.
+              • Sağ üstteki <strong className="text-hud-text">"Ders Ekle"</strong> butonuna basabilir veya takvimdeki <strong className="text-hud-text">boş bir saate doğrudan tıklayarak</strong> ders ekleyebilirsin.
+              <br />• Ders eklerken <strong>Zorunluluk (%)</strong> değerini girdiğinde (örn: %70), sistem takvime eklediğin ders saatlerine bakarak toplam devamsızlık hakkını otomatik hesaplar. Devam zorunluluğu yoksa <strong>0</strong> girmelisin.
             </p>
           </div>
 
@@ -64,19 +65,19 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
             </div>
             <p className="text-hud-muted leading-relaxed">
               • Hafta bittiğinde bu butona basarak kaçırdığın dersleri kalıcı hafızaya kilitlersin.
-              <br />• Sol paneldeki devamsızlık toplamı korunur, takvim ise yeni hafta için sıfırlanır.
+              <br />• Sol paneldeki devamsızlık toplamı korunur, takvim ise yeni hafta için tamamen sıfırlanır.
             </p>
           </div>
 
-          {/* 4. Ders Silme */}
+          {/* 4. Ders Düzenleme ve Silme */}
           <div className="p-3 rounded-lg bg-[#161822] border border-hud-border/70 flex flex-col gap-1.5">
             <div className="flex items-center gap-2 text-hud-text font-semibold">
-              <Trash2 className="w-3.5 h-3.5 text-hud-muted" />
-              <span>Ders Silme</span>
+              <Edit2 className="w-3.5 h-3.5 text-hud-muted" />
+              <span>Ders Düzenleme ve Silme</span>
             </div>
             <p className="text-hud-muted leading-relaxed">
-              • <strong className="text-hud-text">Tek oturum:</strong> Ders kutusuna dokun/üzerine gel, sağ üstteki kırmızı çöp kutusuna bas.
-              <br />• <strong className="text-hud-text">Tüm ders:</strong> Sol devamsızlık listesinde ders adının yanındaki çöp kutusuna bas.
+              • <strong className="text-hud-text">Tek oturum silme:</strong> Takvimdeki ders kutusunun sağ üstündeki kırmızı çöp kutusuna bas.
+              <br />• <strong className="text-hud-text">Dersi düzenleme / tamamen silme:</strong> Sol devamsızlık listesinde dersin adına dokun/üzerine gel. Çıkan <strong>Kalem</strong> ikonuna basarak ders ismini veya yüzdesini değiştirebilir, <strong>Çöp Kutusu</strong> ile dersi tüm takvimden silebilirsin.
             </p>
           </div>
 
@@ -87,29 +88,34 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               <span>Yapılacaklar & Ödev Takibi</span>
             </div>
             <p className="text-hud-muted leading-relaxed">
-              • Sol alttan ödev ve teslim tarihi ekle. Süresi yaklaşanlar sarı, geçenler kırmızı görünür. Tamamladığında üzerine tıkla.
+              • Sol alttan görev ve teslim tarihi ekle. Süresi yaklaşanlar sarı, geçenler kırmızı görünür. Tamamladığında üzerine tıkla.
             </p>
           </div>
 
-          {/* 6. iPad Ana Ekrana Ekleme */}
+          {/* 6. Ana Ekrana Ekleme (Evrensel) */}
           <div className="p-3 rounded-lg bg-[#161822] border border-hud-border/70 flex flex-col gap-2">
             <div className="flex items-center gap-2 text-hud-primary font-semibold">
               <Share className="w-3.5 h-3.5" />
-              <span>iPad Ana Ekrana Ekleme (Tam Ekran Modu)</span>
+              <span>Mobil & Tablet Ana Ekrana Ekleme</span>
             </div>
             <p className="text-hud-muted leading-relaxed text-[11px]">
-              Tarayıcı çubukları olmadan tam ekran çalıştırmak için:
+              Tarayıcı çubukları olmadan, tıpkı yerel bir mobil uygulama gibi kullanmak için:
             </p>
-            <div className="flex flex-col gap-1.5 text-hud-muted font-mono text-[11px]">
-              <div><span className="text-hud-primary font-bold mr-1.5">1.</span>Safari'nin sağ üstündeki <strong className="text-hud-text font-sans">Paylaş</strong> butonuna tıkla.</div>
-              <div><span className="text-hud-primary font-bold mr-1.5">2.</span>Menüde aşağı inip <strong className="text-hud-text font-sans">Daha Fazla (View More)</strong> seçeneğine tıkla.</div>
-              <div><span className="text-hud-primary font-bold mr-1.5">3.</span>Listeden <strong className="text-hud-text font-sans">Ana Ekrana Ekle (Add to Home Screen)</strong> seçeneğini seç.</div>
-              <div><span className="text-hud-primary font-bold mr-1.5">4.</span><strong className="text-hud-text font-sans">Open as WebApp</strong> açık kalsın ve <strong className="text-hud-text font-sans">Ekle</strong>'ye bas.</div>
+            <div className="flex flex-col gap-2.5 text-hud-muted font-mono text-[11px] mt-1">
+              <div>
+                <span className="text-hud-text font-sans font-bold block mb-0.5">🍎 iOS (Safari) için:</span>
+                Alt menüdeki <strong className="text-hud-text font-sans">Paylaş</strong> (kare içinden çıkan ok) butonuna bas, aşağı inip <strong className="text-hud-text font-sans">"Ana Ekrana Ekle"</strong> seçeneğini seç.
+              </div>
+              <div>
+                <span className="text-hud-text font-sans font-bold block mb-0.5">🤖 Android (Chrome) için:</span>
+                Sağ üstteki <strong className="text-hud-text font-sans">Üç Nokta (⋮)</strong> menüsüne bas, listeden <strong className="text-hud-text font-sans">"Ana Ekrana Ekle"</strong> veya <strong className="text-hud-text font-sans">"Uygulamayı Yükle"</strong> seçeneğini seç.
+              </div>
             </div>
           </div>
+
         </div>
 
-        {/* Sabit Alt Bar: Her zaman ekranın içinde görünür */}
+        {/* Sabit Alt Bar */}
         <div className="p-3 border-t border-hud-border bg-[#12141C] flex justify-end flex-shrink-0">
           <button
             onClick={onClose}
